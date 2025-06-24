@@ -1,0 +1,27 @@
+# configs/default.yaml
+
+api:
+  # Base URL (no trailing slash)
+  base_url: https://v6.exchangerate-api.com/v6
+
+etl:
+  # Which currency to use as the “base”
+  base_currency: USD
+  # (Optional) if you only care about a subset of targets:
+  # target_currencies:
+  #   - EUR
+  #   - GBP
+  #   - JPY
+
+schedule:
+  # If you ever switch to a scheduler that reads this:
+  daily_time: "00:00"   # hh:mm in 24-hour format
+
+output:
+  # Where to dump raw JSON
+  directory: data/raw
+  filename_template: "rates_{date}.json"  # date will be YYYY-MM-DD
+
+logging:
+  level: INFO
+  format: "%(asctime)s %(levelname)s %(name)s: %(message)s"
