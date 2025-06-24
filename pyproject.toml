@@ -1,0 +1,15 @@
+# pyproject.toml
+[tool.ruff]
+# max characters per line
+line-length = 120
+
+# which error codes to ignore
+ignore = [
+  "E402",  # Module level import not at top of file
+]
+
+# which rules to select (optional; otherwise uses Ruff’s defaults)
+# select = ["F", "E", "RUF100"]
+
+# directories/files to exclude
+exclude = ["build/", "dist/", ".venv/"]
