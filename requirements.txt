@@ -1,9 +1,9 @@
-pyyaml
-python-dotenv
-requests
 mysql-connector-python
 pandas
+pre-commit
 pytest
 pytest-cov
-pre-commit
+python-dotenv
+pyyaml
+requests
 ruff

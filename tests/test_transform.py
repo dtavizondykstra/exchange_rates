@@ -157,9 +157,7 @@ class TestTransformRates:
     def test_many_currency_rates(self):
         """Test transformation with many currency rates."""
         # Arrange
-        conversion_rates = {
-            f"CUR{i:02d}": float(i * 0.1) for i in range(1, 101)
-        }  # 100 currencies
+        conversion_rates = {f"CUR{i:02d}": float(i * 0.1) for i in range(1, 101)}  # 100 currencies
 
         raw_data = {
             "base_code": "USD",

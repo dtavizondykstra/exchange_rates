@@ -95,9 +95,7 @@ def load_database_config() -> dict:
         required_fields = ["database", "user", "password"]
         missing_fields = [field for field in required_fields if not db_config[field]]
         if missing_fields:
-            raise ValueError(
-                f"Missing required database configuration: {missing_fields}"
-            )
+            raise ValueError(f"Missing required database configuration: {missing_fields}")
 
         logger.info("Database configuration loaded successfully")
         return db_config
