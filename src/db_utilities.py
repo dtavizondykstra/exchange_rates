@@ -32,5 +32,5 @@ def load_sql_template(name: str) -> str:
     """Load an SQL file from the sql/ directory by filename."""
     path = Path(__file__).parent.parent / "sql" / name
     sql = path.read_text(encoding="utf-8")
-    logger.debug("Loaded SQL template %s", path)
+    logger.info(f"Succesfully loaded SQL template {path}")
     return sql
