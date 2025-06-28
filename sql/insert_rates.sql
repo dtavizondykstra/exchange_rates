@@ -1,6 +1,5 @@
 -- sql/insert_rates.sql
-
-INSERT INTO `{table}` ({columns})
-VALUES ({placeholders})
-ON DUPLICATE KEY UPDATE
-{update_assignments};
+LOAD DATA INFILE '{csv_file_path}'
+INTO TABLE {table}
+FIELDS TERMINATED BY ','
+IGNORE 1 LINES;
