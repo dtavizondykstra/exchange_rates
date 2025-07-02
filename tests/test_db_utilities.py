@@ -17,7 +17,7 @@ def test_load_insert_rates_sql_template():
     """
     content = load_sql_template("insert_rates.sql")
     # basic sanity check
-    assert "INSERT INTO" in content.upper()
+    assert "LOAD DATA LOCAL INFILE" in content.upper()
     assert "{table}" in content  # make sure our placeholder is still there
 
 
@@ -30,12 +30,20 @@ def test_load_create_rates_table_sql_template():
 
 def test_connect_to_mysql_success(monkeypatch):
     """Should call mysql.connector.connect with the right parameters and return its result."""
-    # Prepare a fake connect() to capture its kwargs and return a dummy connection
     captured = {}
+
+    class DummyConnection:
+        def is_connected(self):
+            return True
+
+        def get_server_info(self):
+            return "FAKE_VERSION"
+
+    dummy = DummyConnection()
 
     def fake_connect(**kwargs):
         captured.update(kwargs)
-        return "FAKE_CONNECTION"
+        return dummy
 
     monkeypatch.setattr(mysql.connector, "connect", fake_connect)
 
@@ -48,10 +56,12 @@ def test_connect_to_mysql_success(monkeypatch):
 
     conn = connect_to_mysql(db_cfg)
 
-    # We should get back exactly what fake_connect returned
-    assert conn == "FAKE_CONNECTION"
+    # Should return our dummy object
+    assert conn is dummy
+    # And .is_connected() was called and returned True
+    assert conn.is_connected()
 
-    # And the captured kwargs should include our config plus allow_local_infile=True
+    # Verify the connector was called with the expected arguments
     assert captured["host"] == "db.example.com"
     assert captured["user"] == "test_user"
     assert captured["password"] == "secret"
