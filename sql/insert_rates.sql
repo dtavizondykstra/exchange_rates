@@ -12,4 +12,3 @@ IGNORE 1 LINES
     time_next_update_unix,
     time_last_update_unix
 );
-
