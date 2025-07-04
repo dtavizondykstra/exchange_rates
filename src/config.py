@@ -55,20 +55,14 @@ def construct_api_url(config: dict) -> str:
         base_url = api_config["base_url"]
         endpoint = api_config["endpoint"]
 
-        api_key = os.getenv("API_KEY")
+        api_key = os.getenv("EXCHANGE_RATE_API_KEY")
         if not api_key:
-            raise ValueError("API_KEY environment variable is not set")
+            raise ValueError("EXCHANGE_RATE_API_KEY environment variable is not set")
 
         # Construct the full URL
-        url = f"{base_url}{endpoint}?access_key={api_key}"
+        url = f"{base_url}/{api_key}/{endpoint}"
 
-        # Add additional parameters if specified
-        if "symbols" in api_config:
-            url += f"&symbols={api_config['symbols']}"
-        if "base" in api_config:
-            url += f"&base={api_config['base']}"
-
-        logger.info(f"Constructed API URL: {url.replace(api_key, '***')}")
+        logger.info(f"Constructed API URL: {url.replace(api_key, '*******')}")
         return url
     except KeyError as e:
         logger.error(f"Missing required configuration key: {e}")
