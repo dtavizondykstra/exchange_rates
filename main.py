@@ -56,18 +56,18 @@ def main(use_sample: bool) -> None:
     logger.info("=" * 60)
     logger.info("Starting Exchange Rates ETL Pipeline")
     logger.info("=" * 60)
-    logger.info(f"******* Running in {'sample' if use_sample else 'live'} data mode *******")
+    logger.info(f"******* Running in {'sample' if use_sample else 'live'} data mode *******\n")
 
     try:
         # 1) Env, config, DB creds
-        logger.info("Step 1: Loading configuration and environment variables")
+        logger.info("##### Step 1: Loading configuration and environment variables")
         load_environment()
         cfg = load_configuration()
         db_cfg = load_database_config()
-        logger.info("Configuration loaded successfully")
+        logger.info("Configuration loaded successfully\n")
 
         # 2) Extract
-        logger.info("Step 2: Extracting exchange rate data")
+        logger.info("##### Step 2: Extracting exchange rate data")
         if use_sample:
             sample_path = Path(__file__).parent / "data" / "raw" / "sample_rates.json"
             logger.info(f"Using sample JSON at {sample_path}")
@@ -76,22 +76,22 @@ def main(use_sample: bool) -> None:
             url = construct_api_url(cfg)
             logger.info("Fetching live data from API")
             raw = get_exchange_rates(url)
-        logger.info("Data extraction completed successfully")
+        logger.info("Data extraction completed successfully\n")
 
         # 3) Transform
-        logger.info("Step 3: Transforming exchange rate data")
+        logger.info("##### Step 3: Transforming exchange rate data")
         rows = transform_rates(raw)
-        logger.info("Data transformation completed successfully")
+        logger.info("Data transformation completed successfully\n")
 
         # 4) Save CSV
-        logger.info("Step 4: Saving data to CSV file")
+        logger.info("##### Step 4: Saving data to CSV file")
         out_dir = Path(__file__).parent / "data" / "processed"
         filename = f"rates_{date.today().isoformat()}.csv"
         csv_path = save_to_csv(rows, out_dir, filename)
-        logger.info("CSV file saved successfully")
+        logger.info("CSV file saved successfully\n")
 
         # 5) Load into MySQL
-        logger.info("Step 5: Loading data into MySQL database")
+        logger.info("##### Step 5: Loading data into MySQL database")
         load_csv_to_mysql(csv_path, db_cfg["table"], db_cfg)
         logger.info("Database loading completed successfully")
 
@@ -108,4 +108,4 @@ def main(use_sample: bool) -> None:
 
 
 if __name__ == "__main__":
-    main(use_sample=True)
+    main(use_sample=False)  # Set to False for live data
