@@ -3,6 +3,7 @@
 api:
   # Base URL (no trailing slash)
   base_url: https://v6.exchangerate-api.com/v6
+  endpoint: latest/USD
 
 etl:
   # Which currency to use as the “base”
