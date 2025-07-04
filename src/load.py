@@ -20,16 +20,32 @@ def load_csv_to_mysql(
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file {csv_path} does not exist")
 
-    # 1) Read header and payload
+    # 1) Validate CSV file and count rows
+    logger.info(f"Analyzing CSV file: {csv_path}")
+
     with csv_path.open("r", encoding="utf-8") as f:
         reader = csv.reader(f)
-        header = next(reader, ModuleNotFoundError)
-        first_row = next(reader, None)
-    if not header or not first_row:
-        logger.warning(f"CSV file {csv_path} is empty or malformed")
+        try:
+            header = next(reader)
+            if not header:
+                logger.warning(f"CSV file {csv_path} has no header row")
+                return
+
+            # Count data rows (excluding header)
+            row_count = sum(1 for row in reader if row)  # Non-empty rows only
+
+        except StopIteration:
+            logger.warning(f"CSV file {csv_path} is empty")
+            return
+
+    if row_count == 0:
+        logger.warning(f"CSV file {csv_path} has no data rows")
         return
-    logger.info(f"Succesfully loaded file: {csv_path}")
-    logger.info(f"Target Table: {table_name}")
+
+    logger.info(f"Successfully validated CSV file: {csv_path}")
+    logger.info(f"Header columns: {len(header)} ({', '.join(header[:5])}{'...' if len(header) > 5 else ''})")
+    logger.info(f"Data rows to load: {row_count}")
+    logger.info(f"Target table: {table_name}")
 
     # 2) Build SQL via template
     template = load_sql_template("insert_rates.sql")
@@ -45,8 +61,10 @@ def load_csv_to_mysql(
     try:
         logger.info(f"Executing SQL to load data into MySQL table: {table_name}")
         cursor.execute(sql)
+        affected_rows = cursor.rowcount
         conn.commit()
-        logger.info(f"Successfully loaded data into `{table_name}` table")
+        logger.info(f"Successfully loaded {affected_rows} rows into `{table_name}` table")
+        logger.info(f"Expected: {row_count} rows, Loaded: {affected_rows} rows")
     except Exception as e:
         logger.info(f"Error loading data into `{table_name}` table: {e}")
         conn.rollback()
