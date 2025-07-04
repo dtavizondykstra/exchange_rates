@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def get_exchange_rates(url: str, timeout: float = 10.0) -> Mapping[str, Any]:
     """Fetch exchange rates from the API endpoint."""
     try:
-        logger.info(f"Fetching rates from {url}")
+        logger.info(f"Fetching rates from {url[:30]}***.. (truncated for security)")
         response = requests.get(url, timeout=timeout)
         response.raise_for_status()
         logger.info("Successfully fetched exchange rates")
