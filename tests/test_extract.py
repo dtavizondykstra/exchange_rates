@@ -158,7 +158,11 @@ class TestGetExchangeRates:
             get_exchange_rates(url)
 
     def test_raise_for_status_called(self, monkeypatch):
-        """Test that raise_for_status is called and json is not called on error."""
+        """Test that raise_for_status is called and json is not called on error.
+
+        Note: Due to the @retry decorator, this will be called 3 times before
+        failing.
+        """
         # Arrange
         mock_response = MagicMock()
         mock_response.raise_for_status.side_effect = requests.HTTPError("Bad status")
@@ -175,8 +179,8 @@ class TestGetExchangeRates:
         with pytest.raises(requests.HTTPError):
             get_exchange_rates(url)
 
-        # Verify raise_for_status was called
-        mock_response.raise_for_status.assert_called_once()
+        # Verify raise_for_status was called 3 times due to retry decorator
+        assert mock_response.raise_for_status.call_count == 3
         # Verify json was not called since raise_for_status failed
         mock_response.json.assert_not_called()
 
