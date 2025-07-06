@@ -6,10 +6,16 @@ from pathlib import Path
 from typing import Any
 
 import mysql.connector
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
 
+@retry(
+    stop_max_attempt_number=3,
+    wait_fixed=10000,
+    retry_on_exception=lambda e: isinstance(e, mysql.connector.Error),
+)
 def connect_to_mysql(db_config: dict[str, Any]):
     """Establish and return a MySQL connection using db_config.
 
