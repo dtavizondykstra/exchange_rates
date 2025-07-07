@@ -99,3 +99,11 @@ def load_database_config() -> dict:
     except Exception as e:
         logger.error(f"Unexpected error loading database configuration: {e}")
         raise
+
+
+def get_slack_token() -> str:
+    """Retrieve Slack token from environment variable."""
+    slack_token = os.getenv("BOT_TOKEN")
+    if not slack_token:
+        raise ValueError("BOT_TOKEN environment variable is not set")
+    return slack_token

@@ -32,6 +32,8 @@ import logging
 import sys
 from datetime import date
 from pathlib import Path
+import argparse
+
 
 # Add src directory to Python path
 sys.path.append(str(Path(__file__).parent / "src"))
@@ -46,11 +48,12 @@ from extract import get_exchange_rates
 from load import load_csv_to_mysql
 from transform import transform_rates
 from data_utilities import save_to_csv
-from logging_utilities import setup_logging
+from logging_utilities import setup_logging, get_log_file_path
+from slack_utilities import notify_success, notify_failure
 
 
 def main(use_sample: bool) -> None:
-    setup_logging("main")
+    """Main entry point for the Exchange Rates ETL pipeline."""
     logger = logging.getLogger(__name__)
 
     logger.info("=" * 60)
@@ -108,4 +111,29 @@ def main(use_sample: bool) -> None:
 
 
 if __name__ == "__main__":
-    main(use_sample=False)  # Set to False for live data
+    # Argument parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sample", action="store_true")
+    args = parser.parse_args()
+
+    # Setup logging
+    setup_logging("main")
+    logger = logging.getLogger("main")
+
+    # compute the log path for today
+    log_path = get_log_file_path("main")
+    logger.info(f"Log file created at: {log_path}")
+
+    # Slack channel for notifications
+    slack_channel = "exchange_rates_etl"
+
+    try:
+        main(use_sample=args.sample)
+        logger.info("ETL succeeded, sending Slack notification…")
+        notify_success(log_path, slack_channel)
+        sys.exit(0)
+
+    except Exception as err:
+        logger.exception("ETL failed, sending Slack notification…")
+        notify_failure(log_path, str(err), slack_channel)
+        sys.exit(1)

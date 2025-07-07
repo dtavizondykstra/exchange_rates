@@ -1,3 +1,4 @@
+# test_config.py
 import os
 import pytest
 import yaml
@@ -12,6 +13,7 @@ from config import (
     load_configuration,
     load_database_config,
     load_environment,
+    get_slack_token,
 )
 
 
@@ -86,3 +88,18 @@ def test_load_environment_raises_on_error(monkeypatch):
     with pytest.raises(Exception) as exc:
         load_environment()
     assert "boom" in str(exc.value)
+
+
+def test_get_slack_token_success(monkeypatch):
+    # Arrange: set the env var
+    monkeypatch.setenv("BOT_TOKEN", "xoxb-12345")
+    # Act & Assert: retrieves exactly what’s in the env
+    assert get_slack_token() == "xoxb-12345"
+
+
+def test_get_slack_token_missing(monkeypatch):
+    # Arrange: ensure the var is not present
+    monkeypatch.delenv("BOT_TOKEN", raising=False)
+    # Act & Assert: calling without the var raises the right error
+    with pytest.raises(ValueError, match="BOT_TOKEN environment variable is not set"):
+        get_slack_token()
