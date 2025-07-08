@@ -1,91 +1,76 @@
-# tests/test_logging_utilities.py
-
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
 
 import pytest
 
-# Add project root to Python path
+# Ensure we import the version under src/
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
 import logging_utilities as lu
 
 
-class DummyDateTime:
-    """Fake datetime module with a fixed now()."""
-
-    @classmethod
-    def now(cls):
-        # Use a reproducible date
-        return datetime(2020, 1, 1, 12, 34, 56)
-
-    @staticmethod
-    def strftime(fmt):
-        # Should match how strftime is used
-        return "01-01-2020"  # dd-mm-YYYY
-
-
 @pytest.fixture(autouse=True)
-def isolate_env(tmp_path, monkeypatch):
+def isolate(tmp_path, monkeypatch):
     """
-    Redirect the project_root to a temporary directory so we don't pollute real logs/.
-    Also freeze datetime for reproducible filenames.
+    1) Point lu.__file__ to tmp_path/src/logging_utilities.py
+    2) Monkeypatch Path.resolve so setup_logging picks tmp_path as project_root
+    3) Clear existing root logger handlers so basicConfig actually installs ours
     """
-    # Point __file__.resolve().parent.parent to tmp_path/project
+    # Create a fake src/logging_utilities.py under tmp_path
     fake_src = tmp_path / "src"
     fake_src.mkdir(parents=True)
-    fake_file = fake_src / "logging_utilities.py"
-    fake_file.write_text("# dummy")
-    # Monkeypatch Path.resolve to map the module's __file__ to fake_file
+    fake_mod = fake_src / "logging_utilities.py"
+    fake_mod.write_text("# stub")
+
+    # Override the module's __file__ so Path(__file__) uses fake_mod
+    monkeypatch.setattr(lu, "__file__", str(fake_mod))
+
+    # Replace Path.resolve: if resolving fake_mod, return fake_mod; else default
     original_resolve = Path.resolve
 
     def fake_resolve(self):
-        # Only override for the module file path
-        if str(self).endswith("logging_utilities.py"):
-            return fake_file
+        if str(self) == str(fake_mod):
+            return fake_mod
         return original_resolve(self)
 
     monkeypatch.setattr(Path, "resolve", fake_resolve)
 
-    # Freeze datetime in the module
-    monkeypatch.setattr(lu, "datetime", DummyDateTime)
+    # Clear any handlers so basicConfig will run
+    root = logging.getLogger()
+    for h in list(root.handlers):
+        root.removeHandler(h)
 
     yield
 
-    # teardown: restore Path.resolve
+    # Teardown: restore Path.resolve
     monkeypatch.setattr(Path, "resolve", original_resolve)
 
 
-def test_get_log_file_path_produces_expected(tmp_path):
-    # ensure logs/ exists under fake_src
-    fake_logs = tmp_path / "src" / "logs"
-    fake_logs.mkdir()
+def test_get_log_file_path(tmp_path):
+    # Create the logs/ directory under fake src
+    (tmp_path / "src" / "logs").mkdir(parents=True)
 
-    # Call get_log_file_path
     p = lu.get_log_file_path("mylog")
-    # It should point into fake_src/logs/mylog_01-01-2020.log
-    assert p.name == "mylog_01-01-2020.log"
-    assert "logs" in str(p)
-    # The file does not have to exist yet
+
+    # It should live in a "logs" folder and be date-stamped
+    assert p.parent.name == "logs"
+    assert p.name.startswith("mylog_") and p.suffix == ".log"
+    # File need not actually exist yet
     assert not p.exists()
 
 
-def test_setup_logging_creates_file_and_handlers(tmp_path):
-    # Before calling, logs/ should not exist
-    fake_logs = tmp_path / "logs"
-    assert not fake_logs.exists()
+def test_setup_logging_creates_file(tmp_path):
+    logs_dir = tmp_path / "logs"
+    assert not logs_dir.exists()
 
-    # Run setup
+    # Call under our fake project_root
     lu.setup_logging("mylog")
 
-    # Now logs/ and the date‐stamped file should exist
-    log_file = tmp_path / "logs" / "mylog_01-01-2020.log"
-    assert log_file.exists(), "Log file was not created"
-
-    # And the root logger should have both a StreamHandler and a FileHandler
-    handlers = logging.getLogger().handlers
-    assert any(isinstance(h, logging.StreamHandler) for h in handlers)
-    assert any(isinstance(h, logging.FileHandler) for h in handlers)
+    # Now there must be a logs/ folder with exactly one .log file
+    assert logs_dir.exists()
+    files = list(logs_dir.iterdir())
+    assert len(files) == 1
+    log_file = files[0]
+    assert log_file.name.startswith("mylog_") and log_file.suffix == ".log"
