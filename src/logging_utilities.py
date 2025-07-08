@@ -4,7 +4,7 @@
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
+from utilities import get_current_date
 
 
 def setup_logging(log_name: str) -> None:
@@ -12,7 +12,7 @@ def setup_logging(log_name: str) -> None:
     project_root = Path(__file__).resolve().parent.parent
     log_dir = project_root / "logs"
     log_dir.mkdir(exist_ok=True)
-    current_date = datetime.now().strftime("%d-%m-%Y")
+    current_date = get_current_date()
     log_path = log_dir / f"{log_name}_{current_date}.log"
 
     handlers = [
@@ -30,7 +30,7 @@ def setup_logging(log_name: str) -> None:
 def get_log_file_path(log_name: str) -> Path:
     """Get the path to the log file for the given log name."""
     try:
-        today = datetime.now().strftime("%d-%m-%Y")
+        today = get_current_date()
         log_path = Path(__file__).parent / "logs" / f"{log_name}_{today}.log"
         return log_path
     except Exception as e:
